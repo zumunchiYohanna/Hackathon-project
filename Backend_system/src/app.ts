@@ -5,6 +5,9 @@ import rateLimit from "@fastify/rate-limit";
 
 import { env } from "./config/env";
 import { db } from "./db/database";
+import { requestIdMiddleware } from "./utils/request-id";
+import { registerErrorHandler } from "./middleware/error-handler";
+import { registerNotFoundHandler } from "./middleware/not-found";
 
 export async function buildApp() {
   const app = Fastify({
@@ -21,6 +24,10 @@ export async function buildApp() {
     max: 100,
     timeWindow: "1 minute"
   });
+
+  app.addHook("onRequest", requestIdMiddleware);
+  registerErrorHandler(app);
+  registerErrorHandler(app);
 
   app.get("/health", async () => {
     const result = await db.query(

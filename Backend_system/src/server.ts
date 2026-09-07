@@ -1,8 +1,32 @@
 import { buildApp } from "./app";
 import { env } from "./config/env";
+import { db } from "./db/database";
 
 async function start() {
   const app = await buildApp();
+
+  const shutdown = async (signal: string) => {
+    app.log.info(`Received ${signal}. Shutting down...`);
+
+    try {
+      await app.close();
+      await db.end();
+
+      app.log.info("Delivery System API shut down cleanly.");
+      process.exit(0);
+    } catch (error) {
+      app.log.error(error, "Error during shutdown.");
+      process.exit(1);
+    }
+  };
+
+  process.on("SIGINT", () => {
+    void shutdown("SIGINT");
+  });
+
+  process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
+  });
 
   try {
     await app.listen({
@@ -15,9 +39,9 @@ async function start() {
     );
   } catch (error) {
     app.log.error(error);
-
+    await db.end();
     process.exit(1);
   }
 }
 
-start();
+void start();
