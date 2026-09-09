@@ -112,6 +112,6 @@ module.exports = {
     handleRiderTimeout,
     handleItemUnavailable,
     handleRiderDecline,
-     validatePickupCode,
-     handleFailedDelivery
+    validatePickupCode,
+    handleFailedDelivery
 };
