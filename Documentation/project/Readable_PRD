@@ -1,0 +1,574 @@
+# SQUADLINK
+
+## Hackathon 2.0 — Software Product Requirements Document
+
+### Local Commerce & Last-Mile Delivery Coordination Platform
+
+**Initial Market Focus:** Bauchi State, Nigeria
+**Prepared By:** SquadLabs
+**Document Version:** 1.0
+**Date:** September 2026
+
+---
+
+## 1. Document Information & Product Summary
+
+| Field                | Detail                                                                        |
+| -------------------- | ----------------------------------------------------------------------------- |
+| **Product Name**     | SQUADLINK                                                                     |
+| **Solution Type**    | Software — Responsive Web Application with a mobile-optimized rider interface |
+| **Prepared By**      | SquadLabs                                                                     |
+| **Document Version** | 1.0                                                                           |
+| **Date**             | September 2026                                                                |
+| **Initial Market**   | Bauchi State, Nigeria                                                         |
+
+### Product Summary
+
+SQUADLINK is a web-based local commerce and last-mile delivery coordination platform connecting customers with registered local businesses and independent delivery operators in Bauchi State.
+
+Customers can browse a unified product catalogue and build orders from available products. Before an order is finalized and payment is completed, SQUADLINK verifies that a single registered business can fulfill the complete order based on product availability, quantity, pricing, and business status.
+
+Once a suitable business is confirmed, SQUADLINK coordinates an independent rider, using a motorcycle or Keke NAPEP, to collect and deliver the order. Pickup-code and delivery-OTP verification provide accountability throughout the fulfillment process.
+
+SQUADLINK does not own participating businesses and does not operate its own delivery fleet. Instead, it functions as a digital coordination layer connecting customers, local businesses, and independent delivery operators.
+
+### Why This Document Exists
+
+This Product Requirements Document (PRD) translates the SQUADLINK concept into a clear and testable Minimum Viable Product (MVP) for Hackathon 2.0.
+
+It defines:
+
+* The problem being addressed.
+* Target users and their needs.
+* Product objectives.
+* Functional and non-functional requirements.
+* MVP scope and priorities.
+* System architecture and technical direction.
+* Order lifecycle.
+* Acceptance criteria and success metrics.
+* Risks, constraints, and assumptions.
+* Development milestones.
+* Future and out-of-scope capabilities.
+
+Long-term product and system capabilities are intentionally excluded from this MVP document and may be documented separately in the SQUADLINK Master Business & System Design.
+
+---
+
+# 2. Problem Statement
+
+Customers in Bauchi often need products from nearby local shops but may not be able to travel to purchase them. At the same time, many local businesses have products and customers but lack a structured digital ordering and delivery channel.
+
+Independent motorcycle and Keke NAPEP operators also have available delivery capacity that is not consistently connected to customer demand.
+
+Existing informal delivery arrangements can provide limited visibility, verification, accountability, and operational data. Customers may be uncertain about:
+
+* Whether a product is actually available.
+* Which business will fulfill an order.
+* Whether the complete order can be supplied.
+* How much delivery will cost.
+* Whether an order has been picked up.
+* Where the order is within the delivery process.
+* Whether the delivery has been successfully completed.
+
+SQUADLINK addresses this gap by creating a structured digital coordination layer between customers, businesses, and independent riders.
+
+## Problem Evidence / Assumptions to Validate
+
+The MVP is based on the following assumptions:
+
+1. Customers need a simple way to browse a local catalogue and place a trackable delivery order using a phone or computer.
+2. An order should only be confirmed once a single business has been verified as capable of supplying the complete order.
+3. Pickup and delivery verification using a pickup code and delivery OTP can materially improve trust and accountability compared with informal arrangements.
+4. Independent motorcycle and Keke NAPEP operators represent existing delivery capacity that can be coordinated rather than newly created.
+
+These assumptions should be validated further through informal interviews, observation of existing local delivery arrangements, and pilot data when available.
+
+---
+
+# 3. Product Goal & Objectives
+
+## 3.1 Product Goal
+
+To provide a simple digital channel through which customers in Bauchi can order products from local businesses with confidence that the complete order can be fulfilled, while enabling independent riders to be coordinated to complete verified pickup and delivery.
+
+## 3.2 Project Objectives
+
+| ID     | Objective                                                                                    | How Completion Will Be Gauged                                                                                |
+| ------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **01** | Enable customers to browse the catalogue, build an order, and complete a simulated checkout. | A test customer can select products, enter a delivery location, and complete a sandbox payment.              |
+| **02** | Verify that a single business can fulfill the complete order before payment is finalized.    | The Fulfillment Engine selects one eligible business or returns a clear `NO_BUSINESS_FOUND` result.          |
+| **03** | Coordinate an available motorcycle or Keke NAPEP rider to collect and deliver the order.     | The Dispatch Engine assigns a suitable rider who can accept or decline the delivery.                         |
+| **04** | Verify pickup and delivery using a pickup code and delivery OTP.                             | The business verifies the pickup code and the rider verifies the delivery OTP before the order is completed. |
+| **05** | Record business settlement and rider earnings in a ledger after delivery verification.       | Ledger entries appear as eligible/pending settlement after a completed order.                                |
+| **06** | Give administrators basic monitoring and exception-handling capabilities.                    | An administrator can view an order's event history and resolve a basic exception case.                       |
+
+---
+
+# 4. Target Users & Personas
+
+| User              | Need                                                                     | Typical Action                                                                       | Success Condition                                                                  |
+| ----------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| **Customer**      | Convenient access to local products with delivery confidence.            | Browse catalogue, place an order, check out, track delivery, and confirm receipt.    | Can order in a few steps and trust that the order will be fulfilled and delivered. |
+| **Business**      | A structured digital demand channel.                                     | Maintain catalogue, receive fulfillment requests, prepare orders, and verify pickup. | Can manage catalogue and fulfill orders without manual coordination.               |
+| **Rider**         | Access to delivery income using existing motorcycle/Keke NAPEP capacity. | Set availability, accept deliveries, verify pickup, and complete delivery.           | Can receive and complete deliveries and view recorded earnings.                    |
+| **Administrator** | Operational oversight and exception control.                             | Monitor orders, manage approvals, and resolve or reassign exceptions.                | Can inspect and resolve operational issues without direct database access.         |
+
+## 4.1 Primary Persona
+
+**Musa, 24**, lives in Bauchi and frequently needs household items and drinks delivered while he is at work.
+
+Musa wants to:
+
+* Search nearby businesses.
+* Confirm that products are actually available before paying.
+* Place an order without making a physical trip.
+* Know when the business has prepared and released the order.
+* Know when the rider has picked up the order.
+* Confirm when the order is on its way.
+* Receive the order without having to call anyone for updates.
+
+SQUADLINK is designed to provide this experience through a single digital workflow.
+
+---
+
+# 5. Value Proposition & Significance
+
+SQUADLINK is not simply a digital order form. It structures the complete local-delivery loop so that fulfillment is verified before payment, delivery is verified at both ends, and participants have visibility into the process.
+
+### For Customers
+
+* Confidence that the complete order can be fulfilled.
+* Access to local products through a unified catalogue.
+* Visibility into order progress.
+* Verified delivery completion.
+
+### For Businesses
+
+* A digital demand channel.
+* A structured catalogue.
+* Orders based on actual product availability.
+* Reduced manual coordination with riders and customers.
+
+### For Riders
+
+* Access to organized delivery opportunities.
+* Ability to use existing motorcycle or Keke NAPEP capacity.
+* Clear pickup and delivery verification.
+* Recorded delivery earnings.
+
+### For SquadLabs
+
+* A demonstrable end-to-end coordination platform.
+* A practical demonstration of the underlying business mechanism.
+* A foundation that can later support more advanced commerce and logistics capabilities.
+
+---
+
+# 6. Proposed Solution & User Experience
+
+The MVP is a responsive web application for customers, businesses, and administrators, with a mobile-optimized interface for riders.
+
+The primary experience follows a straightforward sequence:
+
+**Product Discovery → Complete-Order Business Verification → Payment → Business Fulfillment → Rider Assignment → Pickup → Delivery → OTP Confirmation**
+
+Customers do not need to know which business will fulfill their order in advance.
+
+Instead, they:
+
+1. Browse the unified catalogue.
+2. Select products and quantities.
+3. Provide a delivery location.
+4. Build their order.
+5. Trigger business fulfillment verification.
+6. Have SQUADLINK identify a single business capable of fulfilling the complete order.
+7. Complete the sandbox payment.
+8. Wait for business fulfillment and rider dispatch.
+9. Track the delivery.
+10. Receive the order through verified delivery.
+
+If no nearby business can fulfill the complete order, the Fulfillment Engine progressively expands the configured search radius before returning a clear failure result.
+
+> **Note:** Wireframes and a user-flow diagram for the primary customer journey — catalogue → order → checkout → tracking → delivery confirmation — are maintained as separate project evidence.
+
+---
+
+# 7. Functional Requirements
+
+| ID        | Requirement                                                                                | Priority | Primary User                | Acceptance Summary                                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------ | -------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **FR-01** | Register, authenticate, and select a language.                                             | Must     | Customer / Business / Rider | Account is created and the user's language preference is stored.                                                    |
+| **FR-02** | Browse and search the unified catalogue and select products and quantities.                | Must     | Customer                    | Products display relevant information such as image, price, and business; available items can be added to an order. |
+| **FR-03** | Enter a delivery location and view a calculated order total.                               | Must     | Customer                    | Total reflects product costs, delivery charges, and applicable fee fields.                                          |
+| **FR-04** | Verify that a single business can fulfill the complete order before checkout is finalized. | Must     | Platform                    | The order proceeds only when one eligible business is confirmed for all items.                                      |
+| **FR-05** | Complete a simulated/sandbox payment.                                                      | Must     | Customer                    | Successful payment results in `PAYMENT_VERIFIED`; failed payments are handled as controlled failures.               |
+| **FR-06** | Maintain a business catalogue with price, availability, and last-updated information.      | Must     | Business                    | Only items marked available are considered fulfillable.                                                             |
+| **FR-07** | Select an alternative business if the first candidate cannot fulfill the complete order.   | Must     | Platform                    | The Fulfillment Engine retries eligible businesses and/or expands the search radius before returning failure.       |
+| **FR-08** | Match and dispatch an available motorcycle or Keke NAPEP rider.                            | Must     | Platform                    | A suitable rider is notified and can accept or decline the delivery.                                                |
+| **FR-09** | Reassign a delivery when a rider declines or fails to respond.                             | Must     | Platform                    | Another suitable rider is offered the delivery.                                                                     |
+| **FR-10** | Generate and verify a pickup code at the business.                                         | Must     | Business / Rider            | The order proceeds to transit only after successful pickup-code verification.                                       |
+| **FR-11** | Verify delivery using an OTP entered by the rider.                                         | Must     | Customer / Rider            | The order can only reach completion after correct OTP verification.                                                 |
+| **FR-12** | Record business settlement and rider earnings in a ledger.                                 | Must     | Platform                    | Eligible/pending ledger entries are created after successful delivery completion.                                   |
+| **FR-13** | Provide administrator monitoring, approvals, and exception handling.                       | Must     | Administrator               | Admin can monitor orders, approve relevant changes, reassign riders, and resolve exceptions.                        |
+| **FR-14** | Notify participants through in-app/web notifications about key order events.               | Should   | All                         | Relevant participants receive notifications when major order-status changes occur.                                  |
+| **FR-15** | Send SMS notifications for selected delivery events.                                       | Could    | Customer / Rider            | SMS notifications are implemented only if time and resources permit.                                                |
+
+---
+
+# 8. Non-Functional Requirements
+
+| Area                | Requirement                                                                       | Target / Constraint                                                             | Verification                  |
+| ------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------- |
+| **Usability**       | The core customer ordering flow should be simple to use on mobile web.            | Order placement should require only a small number of primary steps.            | Task walkthrough.             |
+| **Performance**     | Common pages and API operations should respond promptly under expected demo load. | Most requests should complete quickly in the test environment.                  | Basic timing tests.           |
+| **Security**        | Backend must enforce authentication and role-based authorization.                 | No privileged endpoint should be accessible without the appropriate role.       | Access-control tests.         |
+| **Data Validation** | All user-supplied data must be validated server-side.                             | Invalid or incomplete submissions must be rejected with clear errors.           | Negative tests.               |
+| **Reliability**     | Order lifecycle must use explicit states rather than ad-hoc flags.                | No silent state changes; exceptions must be recorded as controlled transitions. | State-machine test checklist. |
+| **Privacy**         | Only data required for each role should be collected and exposed.                 | Sensitive information must not be unnecessarily exposed across roles.           | PRD and data-access review.   |
+
+### Privacy Examples
+
+* Customer payment information must not be exposed to riders.
+* Rider personal information must not be unnecessarily exposed to customers.
+* Administrative and business privileges must be restricted through server-side authorization.
+
+---
+
+# 9. MVP Scope & Prioritization
+
+The MVP is the smallest credible version of SQUADLINK capable of demonstrating the complete coordination loop:
+
+**Catalogue-Based Ordering → Complete-Order Business Verification → Payment → Fulfillment → Dispatch → Verified Pickup → Verified Delivery → Settlement Recording**
+
+| Priority         | Included                                                                                                                                                                                                                                                                                                                                                                                         | Hackathon Decision                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| **Must**         | Customer registration/login, catalogue browsing, cart, delivery location, sandbox checkout, single-business fulfillment verification, alternative-business fallback, business catalogue management, rider registration/availability, motorcycle/Keke dispatch, pickup code, delivery OTP, order-status tracking, admin monitoring/exception handling, RBAC, audit logging, and input validation. | Build and test first.                      |
+| **Should**       | In-app/web notifications for major status changes, English/Hausa localization provision, and basic 3D-generated visual assets for product/demo presentation.                                                                                                                                                                                                                                     | Build after Must features are stable.      |
+| **Could**        | SMS notifications and interactive 3D GLB/glTF elements.                                                                                                                                                                                                                                                                                                                                          | Implement only if sufficient time remains. |
+| **Out of Scope** | Live GPS tracking, production USSD/IVR, Hausa voice automation, automatic real-money payouts, multi-business/split orders, AI-based dispatch, dynamic pricing, advanced analytics, and multi-city operations.                                                                                                                                                                                    | Document for future work.                  |
+
+---
+
+# 10. System Architecture & Technical Design
+
+## 10.1 Proposed Technology Layers
+
+| Layer             | MVP Requirement                                                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Presentation**  | Responsive web application for customers, businesses, and administrators, with a mobile-optimized rider interface.                                     |
+| **Backend/API**   | Authentication, RBAC, users, businesses, catalogue, orders, fulfillment, dispatch, notifications, and ledger APIs.                                     |
+| **Database**      | Users, roles, businesses, products, catalogue items, riders, vehicles, orders, order items, delivery events, payments, ledger records, and audit logs. |
+| **Core Logic**    | Catalogue Engine, Fulfillment Engine, and Dispatch Engine implemented as clear and separate backend modules.                                           |
+| **Notifications** | In-app/web notifications as the baseline; SMS only if time and resources permit.                                                                       |
+| **Security**      | Authentication, server-side authorization, input validation, protected secrets, audit logging, and minimum-necessary data exposure.                    |
+| **Deployment**    | Reproducible demo environment with setup documentation for judges and test users.                                                                      |
+
+## 10.2 Core Data Entities
+
+### User
+
+* ID
+* Role
+* Name
+* Contact information
+* Language preference
+* Authentication data
+
+### Business
+
+* ID
+* Owner
+* Business type
+* Location
+* Operational status
+* Reliability information
+
+### Product
+
+* ID
+* Name
+* Category
+* Image
+
+### Catalogue Item
+
+* Business
+* Product
+* Price
+* Availability
+* Last updated timestamp
+* Approval status
+
+### Rider
+
+* User
+* Vehicle type
+* Capacity class
+* Availability
+* Reliability information
+
+### Order
+
+* Customer
+* Business
+* Delivery location
+* Status
+* Totals
+* Timestamps
+
+### Order Item
+
+* Order
+* Product
+* Quantity
+* Unit price
+* Subtotal
+
+### Delivery
+
+* Order
+* Rider
+* Pickup code
+* Delivery OTP
+* Delivery events
+
+### Payment
+
+* Order
+* Amount
+* Status
+* Payment reference
+
+### Ledger Entry
+
+* Order
+* Beneficiary
+* Amount
+* Entry type
+* Settlement status
+
+### Audit Log
+
+* Actor
+* Action
+* Entity
+* Timestamp
+* Reason/result
+
+## 10.3 Key Technical Decisions
+
+### Single-Business Fulfillment
+
+For the MVP:
+
+> **One order = one business.**
+
+Multi-business and split orders are explicitly excluded.
+
+### Vehicle Model
+
+Vehicle type is represented as a rider attribute for the MVP:
+
+* Motorcycle
+* Keke NAPEP
+
+A separate advanced fleet-management system is not required.
+
+### Order State Machine
+
+Order status changes must use explicit state transitions rather than ad-hoc boolean flags.
+
+This allows:
+
+* Controlled transitions.
+* Consistent order behavior.
+* Traceability.
+* Exception handling.
+* Easier testing.
+
+### Payment
+
+Payments are simulated or sandboxed for the hackathon.
+
+Production payment processing and automated payouts require separate provider integration, operational controls, and legal/compliance review.
+
+---
+
+# 11. Order Lifecycle
+
+The primary order lifecycle is:
+
+```text
+ORDER_CREATED
+      ↓
+PAYMENT_VERIFIED
+      ↓
+BUSINESS_SELECTED
+      ↓
+RIDER_SEARCHING
+      ↓
+RIDER_ASSIGNED
+      ↓
+RIDER_ACCEPTED
+      ↓
+AT_PICKUP
+      ↓
+PICKUP_VERIFIED
+      ↓
+IN_TRANSIT
+      ↓
+DELIVERY_OTP_VERIFIED
+      ↓
+COMPLETED
+      ↓
+SETTLEMENT_PENDING
+```
+
+## 11.1 Controlled Exception Events
+
+The MVP must account for controlled exceptions, including:
+
+* `PAYMENT_FAILED`
+* `NO_BUSINESS_FOUND`
+* `ITEM_UNAVAILABLE`
+* `RIDER_DECLINED`
+* `RIDER_NO_RESPONSE`
+* `DELIVERY_FAILED`
+* `ADMIN_INTERVENTION`
+
+Exceptions must be recorded and routed through controlled transitions.
+
+They must never silently bypass or corrupt the order lifecycle.
+
+---
+
+# 12. Acceptance Criteria & Success Metrics
+
+| Objective / Area          | MVP Acceptance Criterion                                                              | Pass Condition                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Ordering & Checkout**   | Customer can browse products, place an order, and complete a sandbox payment.         | Order reaches `PAYMENT_VERIFIED` with correct totals.                                     |
+| **Fulfillment**           | A single eligible business is verified before payment is finalized.                   | Fulfillment Engine returns one eligible business or a clear `NO_BUSINESS_FOUND` result.   |
+| **Dispatch**              | A suitable available motorcycle or Keke rider is matched and can accept the delivery. | Delivery reaches `RIDER_ACCEPTED` with a suitable rider.                                  |
+| **Pickup Verification**   | Business verifies the pickup code before releasing the order.                         | Order reaches `PICKUP_VERIFIED` only after successful code verification.                  |
+| **Delivery Verification** | Rider verifies the delivery OTP.                                                      | Order reaches `COMPLETED` only after correct OTP verification.                            |
+| **Settlement**            | Business and rider settlement amounts are recorded in the ledger.                     | Ledger displays eligible/pending entries after successful completion.                     |
+| **Exception Handling**    | At least one controlled exception is demonstrated end-to-end.                         | Rider decline or item-unavailable scenario resolves without manual database intervention. |
+
+---
+
+# 13. Risks, Constraints & Assumptions
+
+## 13.1 Risks and Constraints
+
+| Risk / Constraint                                   | Impact | Likelihood     | Mitigation                                                                                  |
+| --------------------------------------------------- | ------ | -------------- | ------------------------------------------------------------------------------------------- |
+| **Limited hackathon build time (3–4 weeks)**        | High   | High           | Freeze Must-have scope early and defer Should/Could features.                               |
+| **No live payment/payout provider**                 | Medium | High by design | Use sandbox/simulated payment and document the production integration path separately.      |
+| **Rider or business no-show during demonstration**  | Medium | Medium         | Rehearse using seeded demo data and maintain a scripted fallback path.                      |
+| **Catalogue data becoming stale or incorrect**      | Medium | Medium         | Track `last_updated`, validate availability, and flag mismatches for administrative review. |
+| **Unauthorized access to admin/business functions** | High   | Low–Medium     | Enforce server-side RBAC and complete access-control testing before demonstration.          |
+
+## 13.2 Assumptions
+
+1. The MVP is a working prototype for the hackathon, not a production logistics deployment.
+2. Test users have internet access and a modern web browser.
+3. Businesses and riders participating in the demonstration will be represented by prepared test/demo accounts.
+4. Naira delivery-fee values and search-radius parameters are configurable placeholders and do not represent final commercial pricing.
+5. Production payment, payout, logistics, and regulatory requirements will be addressed separately from the hackathon MVP.
+
+---
+
+# 14. Development Plan & Milestones
+
+| Period                   | Target                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Days 1–2**             | Freeze requirements, architecture, data model, user journeys, GitHub setup, and team responsibilities.                                                                                     |
+| **Days 3–5**             | Establish project skeletons, authentication, database/API foundation, navigation, and initial catalogue.                                                                                   |
+| **Days 6–10**            | Implement customer ordering, business catalogue/order views, rider profile and availability, and basic administration.                                                                     |
+| **Days 11–14**           | Establish the working happy path: customer → business → rider → pickup → delivery.                                                                                                         |
+| **Week 3**               | Implement fulfillment and dispatch logic, progressive radius search, pickup code, delivery OTP, ledger, notifications, and localization scaffolding.                                       |
+| **Week 4, if available** | Conduct security testing, implement exception cases, polish the interface, integrate 3D assets, deploy the demo environment, complete documentation, and rehearse the final demonstration. |
+
+---
+
+# 15. Open Questions / Decisions Pending
+
+| Question                                                                 | Current Decision / Direction                                                                  |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **Should customers be required to create accounts?**                     | Yes. Accounts support order tracking, delivery confirmation, and repeat usage.                |
+| **How many businesses and riders will be seeded for the demonstration?** | To be finalized during Days 1–2 planning using a small, controlled demo dataset.              |
+| **What is the maximum search-radius boundary?**                          | Configurable as a system parameter; the exact value will be determined during implementation. |
+| **Will SMS notifications be attempted?**                                 | Only if time and resources permit after all core Must-have features are stable.               |
+
+---
+
+# 16. Change Management During the Hackathon
+
+This PRD serves as the baseline for the SQUADLINK MVP. It does not require every implementation detail to remain unchanged throughout development.
+
+Where the team encounters:
+
+* Technical limitations.
+* Integration challenges.
+* Resource constraints.
+* Better implementation approaches.
+* Testing results that justify a change.
+
+the implementation may be adjusted with reasonable justification.
+
+For any meaningful change, the team should document:
+
+1. What changed.
+2. Why the change was necessary.
+3. What evidence led to the change.
+4. The impact on project objectives.
+5. The impact on functional requirements.
+6. The impact on acceptance criteria.
+7. Any resulting scope or schedule implications.
+
+This ensures that changes remain traceable and consistent with the change-management approach expected during the hackathon.
+
+---
+
+# 17. Explicitly Out of Scope
+
+The following capabilities are explicitly excluded from the SQUADLINK Hackathon 2.0 MVP:
+
+* Production payment processing.
+* Automatic real-money payouts.
+* Live GPS tracking.
+* Advanced route optimization.
+* Production USSD.
+* Production IVR.
+* Hausa voice automation.
+* Multi-business or multi-pickup orders.
+* Advanced AI recommendations.
+* AI-based dispatch.
+* Dynamic pricing.
+* Advertising.
+* Sponsored business placement.
+* Premium business tiers.
+* Advanced fraud detection.
+* Automated refunds and dispute resolution.
+* Large-scale POS/inventory synchronization.
+* Multi-city rollout.
+* Complex fleet management.
+
+These capabilities may be considered in future product and system development but are not required for the hackathon MVP.
+
+---
+
+# Document Status
+
+**Product:** SQUADLINK
+**Project:** Hackathon 2.0 — Software
+**Team:** SquadLabs
+**Market Focus:** Bauchi State, Nigeria
+**Document Version:** 1.0
+**Status:** MVP Product Requirements Baseline
+**Date:** September 2026
+
+---
+
+**SQUADLINK — Local Commerce & Last-Mile Delivery Coordination Platform**
+*Prepared by SquadLabs | September 2026*
