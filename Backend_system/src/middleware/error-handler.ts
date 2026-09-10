@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { ZodError } from "zod";
 
 import { AppError } from "../utils/app-error";
 import { errorResponse } from "../utils/api-response";
@@ -11,6 +12,17 @@ export function registerErrorHandler(app: FastifyInstance): void {
           error.code,
           error.message,
           undefined,
+          request.id
+        )
+      );
+    }
+
+    if (error instanceof ZodError) {
+      return reply.status(400).send(
+        errorResponse(
+          "VALIDATION_ERROR",
+          "Request validation failed.",
+          error.issues,
           request.id
         )
       );

@@ -8,6 +8,13 @@ import { db } from "./db/database";
 import { requestIdMiddleware } from "./utils/request-id";
 import { registerErrorHandler } from "./middleware/error-handler";
 import { registerNotFoundHandler } from "./middleware/not-found";
+import { authRoutes } from "./modules/auth/auth.routes";
+import { businessRoutes } from "./modules/business/business.routes";
+import { catalogRoutes } from "./modules/catalog/catalog.routes";
+import { inventoryRoutes } from "./modules/inventory/inventory.routes";
+import { cartRoutes } from "./modules/cart/cart.routes";
+import { checkoutRoutes } from "./modules/checkout/checkout.routes";
+import { businessVerificationRoutes} from "./modules/business-verification/business-verification.routes";
 
 export async function buildApp() {
   const app = Fastify({
@@ -26,8 +33,40 @@ export async function buildApp() {
   });
 
   app.addHook("onRequest", requestIdMiddleware);
+
   registerErrorHandler(app);
-  registerErrorHandler(app);
+  registerNotFoundHandler(app);
+
+  await app.register(authRoutes, {
+    prefix: "/api/v1/auth"
+  });
+
+  await app.register(businessRoutes, {
+    prefix: "/api/v1/businesses"
+  });
+
+  await app.register(
+  businessVerificationRoutes,
+  {
+    prefix:
+      "/api/v1/admin/business-verifications"
+  });
+
+  await app.register(catalogRoutes, {
+    prefix: "/api/v1/catalog"
+  });
+
+  await app.register(inventoryRoutes, {
+  prefix: "/api/v1/inventory"
+});
+
+await app.register(cartRoutes, {
+  prefix: "/api/v1/cart"
+});
+
+await app.register(checkoutRoutes, {
+  prefix: "/api/v1/checkout"
+});
 
   app.get("/health", async () => {
     const result = await db.query(
