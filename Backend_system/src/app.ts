@@ -14,7 +14,9 @@ import { catalogRoutes } from "./modules/catalog/catalog.routes";
 import { inventoryRoutes } from "./modules/inventory/inventory.routes";
 import { cartRoutes } from "./modules/cart/cart.routes";
 import { checkoutRoutes } from "./modules/checkout/checkout.routes";
+import { orderRoutes } from "./modules/order/order.routes";
 import { businessVerificationRoutes} from "./modules/business-verification/business-verification.routes";
+import { lifecycleRoutes } from "./modules/lifecycle/lifecycle.routes";
 
 export async function buildApp() {
   const app = Fastify({
@@ -66,6 +68,14 @@ await app.register(cartRoutes, {
 
 await app.register(checkoutRoutes, {
   prefix: "/api/v1/checkout"
+});
+
+await app.register(orderRoutes, {
+  prefix: "/api/v1/orders"
+});
+
+await app.register(lifecycleRoutes, {
+  prefix: "/api/v1"
 });
 
   app.get("/health", async () => {
