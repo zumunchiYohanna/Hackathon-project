@@ -6,7 +6,6 @@ import {
   SlidersHorizontal,
   X,
   Package,
-  Info,
   Check,
 } from 'lucide-react';
 import { catalogService } from '@/services/catalogService';
@@ -20,7 +19,6 @@ const sortOptions = [
   { value: 'popular', label: 'Popular' },
   { value: 'price-low', label: 'Price: Low to High' },
   { value: 'price-high', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Highest Rated' },
 ];
 
 export function BrowsePage() {
@@ -75,7 +73,6 @@ export function BrowsePage() {
   });
 
   const products = data?.products ?? [];
-  const source = data?.source ?? 'demo';
   const categories = catalogService.getCategories();
 
   const activeCategory = useMemo(
@@ -167,23 +164,6 @@ export function BrowsePage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Demo notice */}
-        {source === 'demo' && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-accent-200 bg-accent-50 p-4">
-            <Info className="h-5 w-5 text-accent-600 shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-bold text-accent-900">
-                Showing demonstration products
-              </h3>
-              <p className="mt-1 text-sm text-accent-700">
-                These are showcase products so you can try the browsing and cart experience.
-                When the backend catalogue is connected, real products from local businesses will appear here.
-                Set <code className="text-xs bg-accent-100 px-1.5 py-0.5 rounded">VITE_USE_DEMO_CATALOG=false</code> to use the real API.
-              </p>
-            </div>
-          </div>
-        )}
-
         <div className="flex gap-6">
           {/* Sidebar — desktop */}
           <aside className="hidden lg:flex flex-col w-56 shrink-0">
@@ -204,7 +184,7 @@ export function BrowsePage() {
                     All Products
                   </button>
                   {categories.map((cat) => {
-                    const IconComp = getCategoryIcon(cat.icon);
+                    const IconComp = getCategoryIcon(cat.icon ?? '');
                     return (
                       <button
                         key={cat.id}
@@ -285,7 +265,7 @@ export function BrowsePage() {
                     All Products
                   </button>
                   {categories.map((cat) => {
-                    const IconComp = getCategoryIcon(cat.icon);
+                    const IconComp = getCategoryIcon(cat.icon ?? '');
                     return (
                       <button
                         key={cat.id}

@@ -91,7 +91,7 @@ function ShowcaseCard({ product }: { product: Product }) {
         <p className="mt-1 text-xs text-gray-500 line-clamp-2">{product.description}</p>
         <div className="mt-3 flex items-center justify-between">
           <span className="font-display text-lg font-bold text-gray-900">
-            {formatPrice(product.price, product.currency)}
+            {formatPrice(product.price ?? 0, product.currency)}
           </span>
           {product.unit && (
             <span className="text-xs text-gray-400">/ {product.unit}</span>

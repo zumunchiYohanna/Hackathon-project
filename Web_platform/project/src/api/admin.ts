@@ -1,23 +1,24 @@
 import { apiRequest } from './client';
 import type {
   Business,
-  ApiListResponse,
-  ApiSingleResponse,
+  ApiResponseEnvelope,
 } from '@/types';
+
+export interface UpdateBusinessVerificationPayload {
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+  notes?: string | null;
+}
 
 export const adminApi = {
   listBusinesses: () =>
-    apiRequest<ApiListResponse<Business>>('/api/v1/admin/businesses'),
+    apiRequest<ApiResponseEnvelope<unknown[]>>('/api/v1/admin/business-verifications'),
 
   getBusiness: (businessId: string) =>
-    apiRequest<ApiSingleResponse<Business>>(`/api/v1/admin/businesses/${businessId}`),
+    apiRequest<ApiResponseEnvelope<unknown>>(`/api/v1/admin/business-verifications/${businessId}`),
 
-  // TODO: Backend dependency — verification action endpoint
-  // (e.g., POST /api/v1/admin/businesses/:id/verify) may not exist yet.
-  // Do not call this until the backend endpoint is confirmed.
-  verifyBusiness: (businessId: string) =>
-    apiRequest<ApiSingleResponse<Business>>(
-      `/api/v1/admin/businesses/${businessId}/verify`,
-      { method: 'POST' }
+  updateVerification: (businessId: string, payload: UpdateBusinessVerificationPayload) =>
+    apiRequest<ApiResponseEnvelope<unknown>>(
+      `/api/v1/admin/business-verifications/${businessId}`,
+      { method: 'PUT', body: payload }
     ),
 };

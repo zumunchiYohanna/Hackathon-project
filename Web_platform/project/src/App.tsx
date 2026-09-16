@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Link, Routes, Route, useLocation, useNavigationType } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { AuthProvider } from '@/hooks/useAuth';
 import { CartProvider } from '@/hooks/useCart';
 import { Header } from '@/components/layout/Header';
@@ -29,6 +30,7 @@ import { ProfilePage } from '@/pages/ProfilePage';
 
 // Business pages
 import { BusinessDashboard } from '@/pages/business/BusinessDashboard';
+import { BusinessRegisterPage } from '@/pages/business/BusinessRegisterPage';
 import { BusinessOrdersPage, BusinessOrderDetailPage } from '@/pages/business/BusinessOrders';
 import { BusinessCatalogPage } from '@/pages/business/BusinessCatalog';
 
@@ -60,12 +62,43 @@ function PublicPagesLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ScrollHandler() {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+
+  useEffect(() => {
+    const hash = location.hash;
+
+    if (hash) {
+      const targetId = hash.slice(1);
+      requestAnimationFrame(() => {
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: 'auto', block: 'start' });
+          return;
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      });
+      return;
+    }
+
+    if (navigationType !== 'POP') {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      });
+    }
+  }, [location.pathname, location.search, location.hash, navigationType]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CartProvider>
           <BrowserRouter>
+            <ScrollHandler />
             <Routes>
               {/* Auth pages — no public header/footer */}
               <Route path="/login" element={<LoginPage />} />
@@ -90,12 +123,32 @@ export default function App() {
                 }
               >
                 {/* Customer routes */}
-                <Route path="/dashboard" element={<CustomerDashboard />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+                <Route
+                  path="/dashboard"
+                  element={<ProtectedRoute allowedRoles={['CUSTOMER']}><CustomerDashboard /></ProtectedRoute>}
+                />
+                <Route
+                  path="/checkout"
+                  element={<ProtectedRoute allowedRoles={['CUSTOMER', 'BUSINESS_USER']}><CheckoutPage /></ProtectedRoute>}
+                />
+                <Route
+                  path="/orders"
+                  element={<ProtectedRoute allowedRoles={['CUSTOMER', 'BUSINESS_USER']}><OrdersPage /></ProtectedRoute>}
+                />
+                <Route
+                  path="/orders/:orderId"
+                  element={<ProtectedRoute allowedRoles={['CUSTOMER', 'BUSINESS_USER']}><OrderDetailPage /></ProtectedRoute>}
+                />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route
+                  path="/business/register"
+                  element={
+                    <ProtectedRoute allowedRoles={['CUSTOMER']}>
+                      <BusinessRegisterPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Business routes */}
                 <Route
@@ -192,12 +245,12 @@ export default function App() {
                     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
                       <h1 className="font-display text-4xl font-bold text-gray-900">404</h1>
                       <p className="text-gray-600">The page you are looking for does not exist.</p>
-                      <a
-                        href="/"
+                      <Link
+                        to="/"
                         className="inline-flex h-11 items-center rounded-lg bg-primary-600 px-6 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
                       >
                         Back to Home
-                      </a>
+                      </Link>
                     </div>
                   </PublicPagesLayout>
                 }

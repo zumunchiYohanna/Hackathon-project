@@ -19,22 +19,31 @@ export interface Product {
   id: string;
   name: string;
   description?: string;
-  price: number;
+  price?: number;
   currency?: string;
   imageUrl?: string;
   images?: string[];
   category?: string;
+  categoryId?: string;
+  categoryName?: string;
   unit?: string;
   inStock?: boolean;
   available?: boolean;
-  rating?: number;
-  reviewCount?: number;
   featured?: boolean;
   popular?: boolean;
   tags?: string[];
 }
 
+export interface CatalogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+}
+
 export interface CartItem {
+  id?: string;
   productId: string;
   name: string;
   price: number;
@@ -44,28 +53,41 @@ export interface CartItem {
 }
 
 export interface Cart {
+  id?: string;
+  userId?: string;
   items: CartItem[];
 }
 
 export interface CheckoutPreviewItem {
   productId: string;
-  name: string;
+  productName: string;
   quantity: number;
-  price: number;
-  subtotal: number;
+  unitPriceAmount: number;
+  subtotalAmount: number;
 }
 
 export interface CheckoutPreview {
-  items: CheckoutPreviewItem[];
-  subtotal: number;
-  deliveryFee: number;
-  vat: number;
-  total: number;
-  fulfillingBusiness?: {
-    id: string;
-    name: string;
+  cart: { itemCount: number };
+  fulfillment: {
+    businessId: string;
+    businessName: string;
+    distanceMeters: number;
+    searchRadiusMeters: number | null;
   };
-  availabilityErrors?: string[];
+  delivery: {
+    addressLine: string;
+    city: string;
+    state: string;
+    latitude: number;
+    longitude: number;
+  };
+  pricing: {
+    currency: string;
+    subtotalAmount: number;
+    deliveryFeeAmount: number;
+    totalAmount: number;
+  };
+  items: CheckoutPreviewItem[];
 }
 
 export type OrderStatus =

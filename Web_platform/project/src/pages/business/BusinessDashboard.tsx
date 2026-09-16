@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Package,
@@ -8,12 +9,15 @@ import {
   ArrowRight,
   TrendingUp,
   ShoppingBag,
+  Loader2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/States';
-import { formatPrice, formatDate } from '@/utils/format';
-import { demoOrders, demoProducts } from '@/utils/demo-data';
+import { formatDate } from '@/utils/format';
+import { businessApi } from '@/api/business';
 import type { OrderStatus } from '@/types';
+import type { BusinessOrderSummary } from '@/api/business';
+import type { Business } from '@/types';
 
 const statusVariants: Record<OrderStatus, 'default' | 'success' | 'warning' | 'error' | 'info' | 'neutral'> = {
   PENDING: 'warning',
@@ -26,8 +30,47 @@ const statusVariants: Record<OrderStatus, 'default' | 'success' | 'warning' | 'e
 };
 
 export function BusinessDashboard() {
-  const orders = demoOrders;
-  const productCount = demoProducts.filter((p) => p.available).length;
+  const [orders, setOrders] = useState<BusinessOrderSummary[]>([]);
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [readiness, setReadiness] = useState<unknown>(null);
+  const [operatingHours, setOperatingHours] = useState<unknown[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadOrders() {
+      try {
+        const [ordersResponse, businessResponse, readinessResponse, hoursResponse] = await Promise.all([
+          businessApi.listOrders(),
+          businessApi.getMe(),
+          businessApi.getReadiness(),
+          businessApi.getOperatingHours(),
+        ]);
+        if (!ignore) {
+          setOrders(ordersResponse.data ?? []);
+          setBusiness(businessResponse.data);
+          setReadiness(readinessResponse.data);
+          setOperatingHours(hoursResponse.data ?? []);
+          setError(null);
+        }
+      } catch (err: any) {
+        if (!ignore) {
+          setError(err?.message || 'Unable to load business orders.');
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadOrders();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const stats = {
     pending: orders.filter((o) => o.status === 'PENDING').length,
@@ -36,16 +79,43 @@ export function BusinessDashboard() {
     delivered: orders.filter((o) => o.status === 'DELIVERED').length,
   };
 
-  const revenue = orders
-    .filter((o) => o.status === 'DELIVERED')
-    .reduce((sum, o) => sum + o.total, 0);
-
   const recentOrders = orders.slice(0, 5);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="font-display text-2xl font-bold text-gray-900 mb-1">Business Dashboard</h1>
       <p className="text-sm text-gray-500 mb-6">Manage your orders, catalogue, and business operations.</p>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Business</p>
+          <p className="mt-1 font-semibold text-gray-900">{business?.name ?? 'Unavailable'}</p>
+          <p className="text-xs text-gray-500">Verification: {business?.verificationStatus ?? 'Unavailable'}</p>
+        </div>
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Readiness</p>
+          <p className="mt-1 text-sm text-gray-700">{readiness ? 'Loaded from backend' : 'Unavailable'}</p>
+          <p className="text-xs text-gray-500">Read-only owner view</p>
+        </div>
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Operating hours</p>
+          <p className="mt-1 font-semibold text-gray-900">{operatingHours.length} entries</p>
+          <p className="text-xs text-gray-500">Loaded from backend</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm text-gray-600 shadow-sm">
+          <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
+          Loading business orders…
+        </div>
+      ) : null}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -63,8 +133,8 @@ export function BusinessDashboard() {
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-display text-2xl font-bold text-gray-900">{formatPrice(revenue)}</p>
-              <p className="text-xs text-gray-500">Revenue (delivered orders)</p>
+              <p className="font-display text-2xl font-bold text-gray-900">Unavailable</p>
+              <p className="text-xs text-gray-500">Revenue is not returned by the business order endpoint.</p>
             </div>
           </div>
         </div>
@@ -74,8 +144,8 @@ export function BusinessDashboard() {
               <ShoppingBag className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-display text-2xl font-bold text-gray-900">{productCount}</p>
-              <p className="text-xs text-gray-500">Products in catalogue</p>
+              <p className="font-display text-2xl font-bold text-gray-900">{orders.length}</p>
+              <p className="text-xs text-gray-500">Orders in queue</p>
             </div>
           </div>
         </div>
@@ -104,8 +174,8 @@ export function BusinessDashboard() {
           <div className="space-y-2">
             {recentOrders.map((order) => (
               <Link
-                key={order.id}
-                to={`/business/orders/${order.id}`}
+                key={order.orderId}
+                    to={`/business/orders/${order.orderId}`}
                 className="flex items-center justify-between rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -114,13 +184,12 @@ export function BusinessDashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">
-                      #{order.id.slice(-6).toUpperCase()}
+                      #{order.orderId.slice(-6).toUpperCase()}
                     </p>
                     <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-gray-900">{formatPrice(order.total)}</span>
                   <Badge variant={statusVariants[order.status]}>
                     {order.status.replace(/_/g, ' ')}
                   </Badge>

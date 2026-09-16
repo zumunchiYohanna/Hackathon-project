@@ -66,6 +66,8 @@ export function LoginPage() {
   const redirect = searchParams.get('redirect');
   const roleParam = searchParams.get('role');
   const { login } = useAuth();
+  const selectedRole = roleConfig.find((config) => config.role === roleParam)?.role ?? 'CUSTOMER';
+  const selectedRoleTitle = roleConfig.find((config) => config.role === selectedRole)?.title ?? 'Customer';
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -82,8 +84,15 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(identifier, password, 'CUSTOMER');
-      navigate(redirect || '/dashboard');
+      const authenticatedUser = await login(identifier, password, selectedRole);
+      const dashboardPath = authenticatedUser.role === 'BUSINESS_USER'
+        ? '/business'
+        : authenticatedUser.role === 'RIDER'
+          ? '/rider'
+          : authenticatedUser.role === 'ADMIN'
+            ? '/admin'
+            : '/dashboard';
+      navigate(redirect || dashboardPath);
     } catch (err: any) {
       setError(err?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -91,7 +100,7 @@ export function LoginPage() {
     }
   };
 
-  if (roleParam === 'CUSTOMER') {
+  if (roleParam && roleConfig.some((config) => config.role === roleParam)) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         {/* Header */}
@@ -109,8 +118,8 @@ export function LoginPage() {
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="font-display text-3xl font-bold text-gray-900">Customer Login</h1>
-              <p className="mt-2 text-gray-600">Sign in to your SquaLink customer account</p>
+              <h1 className="font-display text-3xl font-bold text-gray-900">{selectedRoleTitle} Login</h1>
+              <p className="mt-2 text-gray-600">Sign in to your SquaLink {selectedRoleTitle.toLowerCase()} account</p>
             </div>
 
             <div className="bg-white px-6 py-8 shadow-xl rounded-2xl border border-gray-100">
@@ -165,12 +174,14 @@ export function LoginPage() {
               </form>
 
               <div className="mt-6 flex flex-col gap-3 text-center text-sm">
-                <Link
-                  to={`/register?role=CUSTOMER${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`}
-                  className="text-primary-600 hover:text-primary-700 font-semibold"
-                >
-                  Don't have an account? Create Account
-                </Link>
+                {selectedRole === 'CUSTOMER' && (
+                  <Link
+                    to={`/register?role=CUSTOMER${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`}
+                    className="text-primary-600 hover:text-primary-700 font-semibold"
+                  >
+                    Don't have an account? Create Account
+                  </Link>
+                )}
                 <button
                   onClick={() => navigate('/login')}
                   className="text-gray-500 hover:text-gray-700"
@@ -186,7 +197,7 @@ export function LoginPage() {
   }
 
 
-  if (roleParam && roleParam !== 'CUSTOMER') {
+  if (roleParam && !roleConfig.some((config) => config.role === roleParam)) {
     const roleTitle = roleConfig.find((c) => c.role === roleParam)?.title || roleParam;
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">

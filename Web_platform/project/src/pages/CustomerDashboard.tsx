@@ -14,8 +14,7 @@ import { catalogService } from '@/services/catalogService';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import { formatPrice, cn } from '@/utils/format';
 import { getCategoryIcon } from '@/utils/icons';
-import { demoOrders } from '@/utils/demo-data';
-import type { OrderStatus } from '@/types';
+import type { OrderStatus, Product } from '@/types';
 
 const statusColors: Record<OrderStatus, string> = {
   PENDING: 'bg-warning-100 text-warning-700',
@@ -49,14 +48,7 @@ export function CustomerDashboard() {
   const { itemCount } = useCart();
 
   const categories = catalogService.getCategories();
-  const popularProducts = catalogService.getDemoProducts()
-    .filter((p) => p.popular || p.featured)
-    .slice(0, 10);
-
-  const orders = demoOrders;
-  const activeOrder = orders.find(
-    (o) => !['DELIVERED', 'CANCELLED'].includes(o.status)
-  );
+  const popularProducts: Product[] = [];
 
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim();
   const greeting = fullName ? `${getGreeting()}, ${fullName}` : 'Welcome back';
@@ -112,42 +104,19 @@ export function CustomerDashboard() {
         {/* Active order */}
         <div className="lg:col-span-1">
           <h2 className="font-display text-lg font-bold text-gray-900 mb-4">Active Order</h2>
-          {activeOrder ? (
-            <Link
-              to={`/orders/${activeOrder.id}`}
-              className="block rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-md hover:border-primary-200 transition-all"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-gray-500">Order #{activeOrder.id.slice(-8)}</span>
-                <span className={cn('rounded-full px-2.5 py-1 text-xs font-semibold', statusColors[activeOrder.status])}>
-                  {statusLabels[activeOrder.status]}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600">
-                {activeOrder.items.length} item{activeOrder.items.length !== 1 ? 's' : ''}
-              </p>
-              <p className="mt-2 font-display text-xl font-bold text-gray-900">
-                {formatPrice(activeOrder.total)}
-              </p>
-              <div className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-primary-600">
-                Track order <ArrowRight className="h-4 w-4" />
-              </div>
-            </Link>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                <Package className="h-6 w-6 text-gray-400" />
-              </div>
-              <p className="mt-3 text-sm font-medium text-gray-900">No active orders</p>
-              <p className="mt-1 text-xs text-gray-500">Start shopping to place your first order!</p>
-              <Link
-                to="/browse"
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700"
-              >
-                Browse products <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+              <Package className="h-6 w-6 text-gray-400" />
             </div>
-          )}
+            <p className="mt-3 text-sm font-medium text-gray-900">Order tracking unavailable</p>
+            <p className="mt-1 text-xs text-gray-500">The backend does not currently expose a customer order read endpoint.</p>
+            <Link
+              to="/browse"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-primary-700"
+            >
+              Browse products <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
 
         {/* Categories */}
@@ -155,7 +124,7 @@ export function CustomerDashboard() {
           <h2 className="font-display text-lg font-bold text-gray-900 mb-4">Popular Categories</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {categories.slice(0, 6).map((cat) => {
-              const IconComp = getCategoryIcon(cat.icon);
+              const IconComp = getCategoryIcon(cat.icon ?? '');
               return (
                 <Link
                   key={cat.id}
@@ -200,7 +169,7 @@ export function CustomerDashboard() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {categories.map((cat) => {
-            const IconComp = getCategoryIcon(cat.icon);
+            const IconComp = getCategoryIcon(cat.icon ?? '');
             return (
               <Link
                 key={cat.id}

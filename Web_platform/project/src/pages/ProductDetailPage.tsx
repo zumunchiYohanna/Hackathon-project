@@ -6,10 +6,8 @@ import {
   ShoppingCart,
   Plus,
   Minus,
-  Star,
   Package,
   Check,
-  Info,
   ChevronRight,
 } from 'lucide-react';
 import { catalogService } from '@/services/catalogService';
@@ -32,10 +30,6 @@ export function ProductDetailPage() {
     enabled: !!id,
     retry: 1,
   });
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
 
   useEffect(() => {
     setQuantity(1);
@@ -88,7 +82,7 @@ export function ProductDetailPage() {
     );
   }
 
-  const { product, source, related } = data;
+  const { product, related } = data;
   const inStock = product.inStock !== false && product.available !== false;
   const inCart = getItemQuantity(product.id);
 
@@ -119,16 +113,6 @@ export function ProductDetailPage() {
           )}
           <span className="text-gray-400 truncate max-w-40">{product.name}</span>
         </nav>
-
-        {/* Demo notice */}
-        {source === 'demo' && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-accent-200 bg-accent-50 p-4">
-            <Info className="h-5 w-5 text-accent-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-accent-700">
-              Showing a demonstration product. When the backend catalogue is connected, real products from local businesses will appear here.
-            </p>
-          </div>
-        )}
 
         {/* Product layout */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
@@ -168,38 +152,21 @@ export function ProductDetailPage() {
               {product.name}
             </h1>
 
-            {/* Rating */}
-            {product.rating !== undefined && (
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={cn(
-                        'h-4 w-4',
-                        star <= Math.round(product.rating!)
-                          ? 'fill-secondary-400 text-secondary-400'
-                          : 'fill-gray-200 text-gray-200'
-                      )}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-medium text-gray-700">{product.rating.toFixed(1)}</span>
-                {product.reviewCount !== undefined && (
-                  <span className="text-sm text-gray-500">({product.reviewCount} reviews)</span>
+            {/* Price */}
+            {typeof product.price === 'number' && (
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="font-display text-3xl font-bold text-gray-900">
+                  {formatPrice(product.price, product.currency)}
+                </span>
+                {product.unit && (
+                  <span className="text-sm text-gray-500">/ {product.unit}</span>
                 )}
               </div>
             )}
 
-            {/* Price */}
-            <div className="mt-4 flex items-baseline gap-2">
-              <span className="font-display text-3xl font-bold text-gray-900">
-                {formatPrice(product.price, product.currency)}
-              </span>
-              {product.unit && (
-                <span className="text-sm text-gray-500">/ {product.unit}</span>
-              )}
-            </div>
+            {!product.price && (
+              <div className="mt-4 text-sm text-gray-500">Price not available.</div>
+            )}
 
             {/* Availability */}
             <div className="mt-3 flex items-center gap-2">

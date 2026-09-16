@@ -1,34 +1,52 @@
 import { catalogApi, type ProductQueryParams } from '@/api/catalog';
-import { mockProducts, getRelatedProducts, type MockProduct } from '@/data/mock/mockProducts';
-import { mockCategories, type MockCategory } from '@/data/mock/mockCategories';
-import type { Product } from '@/types';
+import type { CatalogCategory, Product } from '@/types';
 
-const FORCE_DEMO = import.meta.env.VITE_USE_DEMO_CATALOG === 'true';
-
-export type CatalogSource = 'demo' | 'backend';
+export type CatalogSource = 'backend';
 
 export interface CatalogResult {
   products: Product[];
   source: CatalogSource;
 }
 
-function mockToProduct(mock: MockProduct): Product {
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function normalizeProduct(raw: Partial<Product> & { categoryName?: string; categoryId?: string }): Product {
+  const categoryName = raw.categoryName || raw.category || raw.categoryId || undefined;
+  const category = raw.category || (categoryName ? slugify(categoryName) : undefined);
+
   return {
-    id: mock.id,
-    name: mock.name,
-    description: mock.description,
-    price: mock.price,
-    currency: 'NGN',
-    imageUrl: mock.imageUrl,
-    category: mock.categorySlug,
-    unit: mock.unit,
-    inStock: mock.available,
-    available: mock.available,
-    rating: mock.rating,
-    reviewCount: mock.reviewCount,
-    featured: mock.featured,
-    popular: mock.popular,
-    tags: mock.tags,
+    id: raw.id ?? '',
+    name: raw.name ?? 'Untitled product',
+    description: raw.description ?? undefined,
+    price: typeof raw.price === 'number' ? raw.price : undefined,
+    currency: raw.currency ?? 'NGN',
+    imageUrl: raw.imageUrl ?? undefined,
+    category,
+    categoryId: raw.categoryId,
+    categoryName: raw.categoryName,
+    unit: raw.unit ?? undefined,
+    inStock: raw.inStock ?? raw.available ?? true,
+    available: raw.available ?? raw.inStock ?? true,
+    featured: !!raw.featured,
+    popular: !!raw.popular,
+    tags: raw.tags ?? [],
+  };
+}
+
+function mapCategory(raw: Partial<CatalogCategory>): CatalogCategory {
+  const name = raw.name ?? 'Category';
+  return {
+    id: raw.id ?? name,
+    name,
+    slug: raw.slug ?? slugify(name),
+    icon: raw.icon ?? 'Tag',
+    description: raw.description ?? `Browse ${name.toLowerCase()} products.`,
   };
 }
 
@@ -36,90 +54,78 @@ function sortProducts(products: Product[], sort?: string): Product[] {
   const sorted = [...products];
   switch (sort) {
     case 'price-low':
-      return sorted.sort((a, b) => a.price - b.price);
+      return sorted.sort((a, b) => (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER));
     case 'price-high':
-      return sorted.sort((a, b) => b.price - a.price);
-    case 'rating':
-      return sorted.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+      return sorted.sort((a, b) => (b.price ?? Number.MIN_SAFE_INTEGER) - (a.price ?? Number.MIN_SAFE_INTEGER));
     case 'popular':
       return sorted.sort((a, b) => Number(b.popular) - Number(a.popular));
     case 'recommended':
     default:
-      return sorted.sort((a, b) => {
-        const aScore = Number(a.featured) * 2 + Number(a.popular) + (a.rating ?? 0) / 5;
-        const bScore = Number(b.featured) * 2 + Number(b.popular) + (b.rating ?? 0) / 5;
-        return bScore - aScore;
-      });
+      return sorted.sort((a, b) => Number(b.featured) - Number(a.featured) || Number(b.popular) - Number(a.popular));
   }
-}
-
-function filterDemo(params?: ProductQueryParams): Product[] {
-  let products = mockProducts.map(mockToProduct);
-  if (params?.search) {
-    const q = params.search.toLowerCase();
-    products = products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.category?.toLowerCase().includes(q) ||
-        p.tags?.some((t) => t.includes(q))
-    );
-  }
-  if (params?.category && params.category !== 'all') {
-    products = products.filter((p) => p.category === params.category);
-  }
-  if (params?.availability === 'in-stock') {
-    products = products.filter((p) => p.available !== false);
-  }
-  return sortProducts(products, params?.sort);
 }
 
 export const catalogService = {
-  async list(params?: ProductQueryParams): Promise<CatalogResult> {
-    if (FORCE_DEMO) {
-      return { products: filterDemo(params), source: 'demo' };
-    }
+  categoriesCache: [] as CatalogCategory[],
+
+  async refreshCategories(): Promise<CatalogCategory[]> {
     try {
-      const res = await catalogApi.list(params);
-      return { products: res.data, source: 'backend' };
+      const res = await catalogApi.getCategories();
+      const categories = Array.isArray(res.data) ? res.data : [];
+      this.categoriesCache = categories.map(mapCategory);
+      return this.categoriesCache;
     } catch {
-      return { products: filterDemo(params), source: 'demo' };
+      this.categoriesCache = [];
+      return [];
+    }
+  },
+
+  getCategories(): CatalogCategory[] {
+    return this.categoriesCache;
+  },
+
+  async list(params?: ProductQueryParams): Promise<CatalogResult> {
+    try {
+      const [productsResponse] = await Promise.all([
+        catalogApi.list(params),
+        this.refreshCategories(),
+      ]);
+
+      let products = Array.isArray(productsResponse.data) ? productsResponse.data.map(normalizeProduct) : [];
+
+      if (params?.search) {
+        const q = params.search.toLowerCase();
+        products = products.filter(
+          (product) =>
+            product.name.toLowerCase().includes(q) ||
+            product.description?.toLowerCase().includes(q) ||
+            product.category?.toLowerCase().includes(q) ||
+            product.tags?.some((tag) => tag.toLowerCase().includes(q))
+        );
+      }
+
+      if (params?.category && params.category !== 'all') {
+        products = products.filter((product) => product.category === params.category);
+      }
+
+      if (params?.availability === 'in-stock') {
+        products = products.filter((product) => product.available !== false && product.inStock !== false);
+      }
+
+      return { products: sortProducts(products, params?.sort), source: 'backend' };
+    } catch {
+      return { products: [], source: 'backend' };
     }
   },
 
   async getById(id: string): Promise<{ product: Product | null; source: CatalogSource; related: Product[] }> {
-    if (FORCE_DEMO) {
-      const mock = mockProducts.find((p) => p.id === id);
-      if (!mock) return { product: null, source: 'demo', related: [] };
-      return {
-        product: mockToProduct(mock),
-        source: 'demo',
-        related: getRelatedProducts(id).map(mockToProduct),
-      };
-    }
     try {
-      const res = await catalogApi.getById(id);
-      return { product: res.data, source: 'backend', related: [] };
+      const res = await catalogApi.list();
+      const products = Array.isArray(res.data) ? res.data.map(normalizeProduct) : [];
+      const product = products.find((item) => item.id === id) ?? null;
+      return { product, source: 'backend', related: [] };
     } catch {
-      const mock = mockProducts.find((p) => p.id === id);
-      if (!mock) return { product: null, source: 'demo', related: [] };
-      return {
-        product: mockToProduct(mock),
-        source: 'demo',
-        related: getRelatedProducts(id).map(mockToProduct),
-      };
+      return { product: null, source: 'backend', related: [] };
     }
-  },
-
-  getCategories(): MockCategory[] {
-    return mockCategories;
-  },
-
-  getDemoProducts(): Product[] {
-    return mockProducts.map(mockToProduct);
-  },
-
-  isDemoMode(): boolean {
-    return FORCE_DEMO;
   },
 };

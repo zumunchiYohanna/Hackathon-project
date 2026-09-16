@@ -1,17 +1,41 @@
 import { apiRequest } from './client';
 import type {
   CheckoutPreview,
-  Order,
   ApiSingleResponse,
-  ApiListResponse,
 } from '@/types';
 
+export interface PlacedOrderResponse {
+  orderId: string;
+  status: string;
+  fulfillment: {
+    fulfillmentId: string;
+    businessId: string;
+    businessName: string;
+    status: string;
+  };
+  pricing: {
+    currency: string;
+    subtotalAmount: number;
+    deliveryFeeAmount: number;
+    totalAmount: number;
+  };
+  items: CheckoutPreview['items'];
+}
+
 export interface CheckoutPreviewPayload {
-  items: { productId: string; quantity: number }[];
+  deliveryAddressLine: string;
+  deliveryCity: string;
+  deliveryState: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface CreateOrderPayload {
-  items: { productId: string; quantity: number }[];
+  deliveryAddressLine: string;
+  deliveryCity: string;
+  deliveryState: string;
+  latitude: number;
+  longitude: number;
 }
 
 export const checkoutApi = {
@@ -24,14 +48,10 @@ export const checkoutApi = {
 
 export const ordersApi = {
   create: (payload: CreateOrderPayload, idempotencyKey: string) =>
-    apiRequest<ApiSingleResponse<Order>>('/api/v1/orders', {
+    apiRequest<ApiSingleResponse<PlacedOrderResponse>>('/api/v1/orders', {
       method: 'POST',
       body: payload,
       headers: { 'Idempotency-Key': idempotencyKey },
     }),
 
-  list: () => apiRequest<ApiListResponse<Order>>('/api/v1/orders'),
-
-  getById: (id: string) =>
-    apiRequest<ApiSingleResponse<Order>>(`/api/v1/orders/${id}`),
 };

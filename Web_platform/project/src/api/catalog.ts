@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { Product, ApiListResponse, ApiSingleResponse } from '@/types';
+import type { Product, CatalogCategory, ApiListResponse } from '@/types';
 
 export interface ProductQueryParams {
   search?: string;
@@ -18,12 +18,13 @@ export const catalogApi = {
     if (params?.page) query.set('page', String(params.page));
     if (params?.pageSize) query.set('pageSize', String(params.pageSize));
     if (params?.sort) query.set('sort', params.sort);
+    if (params?.availability === 'in-stock') query.set('availability', 'in-stock');
     const qs = query.toString();
     return apiRequest<ApiListResponse<Product>>(
-      `/api/v1/products${qs ? `?${qs}` : ''}`
+      `/api/v1/catalog/products${qs ? `?${qs}` : ''}`
     );
   },
 
-  getById: (id: string) =>
-    apiRequest<ApiSingleResponse<Product>>(`/api/v1/products/${id}`),
+  getCategories: () =>
+    apiRequest<ApiListResponse<CatalogCategory>>('/api/v1/catalog/categories'),
 };
